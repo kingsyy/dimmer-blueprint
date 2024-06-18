@@ -1,0 +1,43 @@
+blueprint:
+  name: Dimmer Single Click Control
+  description: Cycle through lights and toggle the selected light on a single click.
+  domain: automation
+  input:
+    click_device:
+      name: Click Device
+      description: Device that triggers the light selection (toggle action).
+      selector:
+        device:
+    light_selector:
+      name: Light Selector Input
+      description: Input select entity containing light entity IDs.
+      selector:
+        entity:
+          domain: input_select
+
+trigger:
+  - platform: device
+    device_id: !input click_device
+    type: action
+    
+condition: []
+
+action:
+  - service: input_select.select_next
+    data:
+      cycle: true
+    target:
+      entity_id: !input light_selector
+  - service: light.toggle
+    target:
+      entity_id: "{{ states('input_select.light_selector')}}"
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 1
+      milliseconds: 0
+  - service: light.toggle
+    target:
+      entity_id: "{{ states('input_select.light_selector')}}"
+
+mode: parallel

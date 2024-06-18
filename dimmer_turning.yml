@@ -1,0 +1,72 @@
+blueprint:
+  name: Dimmer Brightness Adjustment
+  description: Adjust the light brightness based on the dimmer step size.
+  domain: automation
+  input:
+    dimmer_step_sensor:
+      name: Dimmer Step Sensor
+      description: Sensor for dimmer step size.
+      selector:
+        entity:
+          domain: sensor
+    light_selector:
+      name: Light Selector Input
+      description: Input select entity containing light entity IDs.
+      selector:
+        entity:
+          domain: input_select
+
+trigger:
+  - platform: state
+    entity_id: !input dimmer_step_sensor
+
+condition:
+  - condition: template
+    value_template: "{{ trigger.to_state.state not in ['None', 'unknown'] }}"
+
+action:
+  - variables:
+      action: "{{ trigger.to_state.attributes.action }}"
+      step_size: "{{ trigger.to_state.state | int }}"
+      selected_light: "{{ states('input_select.light_selector') }}"
+  - variables:
+      current_brightness: >
+        {% if state_attr(selected_light, 'brightness') is not none %}
+          {{ state_attr(selected_light, 'brightness') | int }}
+        {% else %}
+          0
+        {% endif %}
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ action == 'brightness_step_up' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: "{{ selected_light }}"
+            data:
+              brightness: >
+                {% set new_brightness = current_brightness + step_size %} 
+                {% if new_brightness > 255 %}
+                  255
+                {% else %}
+                  {{ new_brightness | int }}
+                {% endif %}
+      - conditions:
+          - condition: template
+            value_template: "{{ action == 'brightness_step_down' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: "{{ selected_light }}"
+            data:
+              brightness: >
+                {% set new_brightness = current_brightness - step_size %} 
+                {% if new_brightness < 0 %}
+                  0
+                {% else %}
+                  {{ new_brightness | int }}
+                {% endif %}
+
+mode: queued
+max: 10
