@@ -18,8 +18,10 @@ blueprint:
 trigger:
   - platform: device
     device_id: !input click_device
+    domain: mqtt
     type: action
-    
+    subtype: toggle
+
 condition: []
 
 action:
