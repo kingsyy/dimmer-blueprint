@@ -44,14 +44,14 @@ action:
           - variables:
               step_size: "{{ trigger.payload_json.action_step_size }}"
               current_brightness: >
-                {% if state_attr(combined_light, 'brightness') is not none %}
-                  {{ state_attr(combined_light, 'brightness') | int }}
+                {% if state_attr(selected_light, 'brightness') is not none %}
+                  {{ state_attr(selected_light, 'brightness') | int }}
                 {% else %}        
                   0
                 {% endif %}
           - service: light.turn_on
             target:
-              entity_id: "{{ combined_light }}"
+              entity_id: "{{ selected_light }}"
             data:
               brightness: >
                 {% set new_brightness = current_brightness + step_size %} {% if
@@ -67,14 +67,14 @@ action:
           - variables:
               step_size: "{{ trigger.payload_json.action_step_size }}"
               current_brightness: >
-                {% if state_attr(combined_light, 'brightness') is not none %}
-                  {{ state_attr(combined_light, 'brightness') | int }}
+                {% if state_attr(selected_light, 'brightness') is not none %}
+                  {{ state_attr(selected_light, 'brightness') | int }}
                 {% else %}
                   0
                 {% endif %}
           - service: light.turn_on
             target:
-              entity_id: "{{ combined_light }}"
+              entity_id: "{{ selected_light }}"
             data:
               brightness: >
                 {% set new_brightness = current_brightness - step_size %} {% if
