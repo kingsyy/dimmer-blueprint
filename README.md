@@ -1,55 +1,29 @@
-# Dimmer Blueprint
-Home assistant blueprint for controlling a dimmer
+# Dimmer Brightness Blueprint
 
-### Description
+Home Assistant blueprint for controlling a dimmer from zigbee2mqtt
 
-This blueprint allows you to control light brightness using a dimmer switch. It supports selecting lights from a dropdown input and adjusting their brightness based on dimmer steps.
-Some dimmers will need custom logic for the changing the brightness percentage. Currently it triggers on step size change, checks for the action is up or down and adds or subtracts that from, the current brightness.
-I would have like to do this in one blueprint but combining the automations seemed to make thing much more unclear.
+## Description
 
-## Dimmer Brightness Adjustment Blueprint
+This blueprint allows you to control light brightness for multiple lights using a dimmer switch. You can select a light from a dropdown input helper and adjust its brightness based on dimmer steps. When pressed and turned it adjusts the brightness of one light element, the Combined Light variable. This way you can turn all the lights on or off. 
 
-### Description
-This blueprint adjusts the brightness of a selected light based on the dimmer step size.
-
-### Inputs
-- **Dimmer Step Sensor**: Sensor for dimmer step size.
-- **Light Selector Input**: Input select entity containing light entity IDs.
-
-### Setup
-1. Create an `input_select` entity with the IDs of the lights you want to control.
-2. Configure the blueprint with the appropriate sensor and input select entity.
-
-### Automation Details
-- **Dimming**: Adjusts the brightness of the selected light based on the dimmer step size.
-
-### Usage
-1. Select the dimmer step sensor.
-2. Choose the light selector input.
-3. Save and activate the automation.
-
-This blueprint provides smooth dimming control for lights based on a dimmer step sensor.
-
-
-## Dimmer Single Click Control Blueprint
-
-### Description
-This blueprint cycles through lights and toggles the selected light on a single click.
+---
+Currently it is only checked to be working with zigbee2mqtt device [TuYa ERS-10TZBVK-AA](https://www.zigbee2mqtt.io/devices/ERS-10TZBVK-AA.html) (and types seen as). 
+** Dont forget to set the dimmer in command mode. ** 
+The mqtt event gets checked for payload for brightness_step_up, brightness_step_down, color_temperature_step_up, color_temperature_step_down and toggle. 
 
 ### Inputs
-- **Click Device**: Device that triggers the light selection (toggle action).
-- **Light Selector Input**: Input select entity containing light entity IDs.
+
+- **MQTT Topic**: The MQTT topic to listen to.
+- **Input Select Dropdown**: Input select helper entity containing light entity IDs.
+- **Combined Light**: The light entity that controls all lights in the dropdown.
 
 ### Setup
+
 1. Create an `input_select` entity with the IDs of the lights you want to control.
-2. Configure the blueprint with the appropriate click device and input select entity.
+2. Configure the blueprint with the appropriate MQTT topic, input select entity, and combined light.
 
 ### Automation Details
-- **Single Click**: Cycles through the lights in the dropdown and toggles the selected light.
 
-### Usage
-1. Select the click device.
-2. Choose the light selector input.
-3. Save and activate the automation.
-
-This blueprint simplifies managing multiple lights with a single click, providing easy configuration and smooth control.
+- **Turning the Knob**: Adjusts the brightness of the selected light based on the dimmer step size.
+- **Pressing the Button**: Selects a light to dim. The selected light will flash for a second.
+- **Turning the Knob and Pressing the Button**: Adjusts the brightness of the combined light variable based on the dimmer step size.

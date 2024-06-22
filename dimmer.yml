@@ -1,0 +1,153 @@
+blueprint:
+  name: Dimmer MQTT Triggered
+  description: "Control multiple lights brightness based on MQTT triggers from TuYa ERS-10TZBVK-AA"
+  domain: automation
+  input:
+    mqtt_topic:
+      name: MQTT Topic
+      description: The MQTT topic to listen to.
+      selector:
+        text:
+    dropdown:
+      name: Input Select Dropdown
+      description: The input select dropdown helper with the names of the light to control. 
+      selector:
+        entity:
+          domain: input_select
+    combined_light:
+      name: Combined Lights
+      description: The light entity that controls all lights in the dropdown. Triggered when pressed and turned
+      selector:
+        entity:
+          domain: light
+
+trigger:
+  - platform: mqtt
+    topic: !input mqtt_topic
+
+condition:
+  - condition: template
+    value_template: "{{ trigger.payload_json.action not in ['None', 'unknown', ''] }}"
+
+action:
+  - variables:
+      action: "{{ trigger.payload_json.action }}"
+      selected_dropdown: !input dropdown
+      selected_light: "{{ states(selected_dropdown) }}"
+      combined_light: !input combined_light
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ action == 'brightness_step_up' }}"
+        sequence:
+          - variables:
+              step_size: "{{ trigger.payload_json.action_step_size }}"
+              current_brightness: >
+                {% if state_attr(combined_light, 'brightness') is not none %}
+                  {{ state_attr(combined_light, 'brightness') | int }}
+                {% else %}        
+                  0
+                {% endif %}
+          - service: light.turn_on
+            target:
+              entity_id: "{{ combined_light }}"
+            data:
+              brightness: >
+                {% set new_brightness = current_brightness + step_size %} {% if
+                new_brightness > 255 %}
+                  255
+                {% else %}
+                  {{ new_brightness | int }}
+                {% endif %}
+      - conditions:
+          - condition: template
+            value_template: "{{ action == 'brightness_step_down' }}"
+        sequence:
+          - variables:
+              step_size: "{{ trigger.payload_json.action_step_size }}"
+              current_brightness: >
+                {% if state_attr(combined_light, 'brightness') is not none %}
+                  {{ state_attr(combined_light, 'brightness') | int }}
+                {% else %}
+                  0
+                {% endif %}
+          - service: light.turn_on
+            target:
+              entity_id: "{{ combined_light }}"
+            data:
+              brightness: >
+                {% set new_brightness = current_brightness - step_size %} {% if
+                new_brightness < 0 %}
+                  0
+                {% else %}
+                  {{ new_brightness | int }}
+                {% endif %}
+      - conditions:
+          - condition: template
+            value_template: "{{ action == 'color_temperature_step_up' }}"
+        sequence:
+          - variables:
+              step_size: "{{ trigger.payload_json.action_step_size }}"
+              current_brightness: >
+                {% if state_attr(combined_light, 'brightness') is not none %}
+                  {{ state_attr(combined_light, 'brightness') | int }}
+                {% else %}        
+                  0
+                {% endif %}
+          - service: light.turn_on
+            target:
+              entity_id: "{{ combined_light }}"
+            data:
+              brightness: >
+                {% set new_brightness = current_brightness + step_size %} {% if
+                new_brightness > 255 %}
+                  255
+                {% else %}
+                  {{ new_brightness | int }}
+                {% endif %}
+      - conditions:
+          - condition: template
+            value_template: "{{ action == 'color_temperature_step_down' }}"
+        sequence:
+          - variables:
+              step_size: "{{ trigger.payload_json.action_step_size }}"
+              current_brightness: >
+                {% if state_attr(combined_light, 'brightness') is not none %}
+                  {{ state_attr(combined_light, 'brightness') | int }}
+                {% else %}
+                  0
+                {% endif %}
+          - service: light.turn_on
+            target:
+              entity_id: "{{ combined_light }}"
+            data:
+              brightness: >
+                {% set new_brightness = current_brightness - step_size %} {% if
+                new_brightness < 0 %}
+                  0
+                {% else %}
+                  {{ new_brightness | int }}
+                {% endif %}
+      - conditions:
+          - condition: template
+            value_template: "{{ action == 'toggle' }}"
+        sequence:
+          - service: input_select.select_next
+            data:
+              cycle: true
+            target:
+              entity_id: "{{ selected_dropdown }}"
+          - service: light.toggle
+            target:
+              entity_id: "{{ states(selected_dropdown) }}"
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 1
+              milliseconds: 0
+          - service: light.toggle
+            target:
+              entity_id: "{{ states(selected_dropdown) }}"
+mode: queued
+max: 10
